@@ -1,0 +1,18 @@
+[Unit]
+Description=MQTT-BLE HID bridge
+Wants=network-online.target
+After=network.target network-online.target
+
+[Service]
+WorkingDirectory=/usr/local/lib/mqtt-hid-bridge
+Type=simple
+ExecStart=/usr/local/bin/mqtt-ble-hid -a tcp://mqtt.local.lan -t ble-hid -u user -p pass
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+User=root
+Group=root
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target

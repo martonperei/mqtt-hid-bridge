@@ -1,0 +1,6 @@
+[submodule "lib/btstack"]
+	path = lib/btstack
+	url = https://github.com/bluekitchen/btstack
+[submodule "lib/mongoose"]
+	path = lib/mongoose
+	url = https://github.com/cesanta/mongoose

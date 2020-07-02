@@ -1,0 +1,18 @@
+[Unit]
+Description=USB -MQTT bridge
+Wants=network-online.target
+After=network.target network-online.target
+
+[Service]
+WorkingDirectory=/usr/local/lib/mqtt-hid-bridge
+Type=simple
+ExecStart=/usr/local/bin/usb-hid-mqtt -a tcp://mqtt.local.lan -t usb-hid -u user -p pass
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+User=root
+Group=root
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target
