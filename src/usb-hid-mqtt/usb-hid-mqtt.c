@@ -5,7 +5,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include "hid-mqtt.h"
+#include "usb-hid-mqtt.h"
 
 #define UNUSED(x) (void)(x)
 
@@ -25,16 +25,17 @@ static const char *mqtt_password;
  * USB variables
  */
 #define USB_CONFIG_INDEX        0
-#define USB_INTERFACE_INDEX     2
+#define USB_INTERFACE_INDEX     0
 #define USB_ALT_SETTING_INDEX   0
 #define USB_ENDPOINT_INDEX      0
-#define USB_VENDOR_ID           0x46d
-#define USB_PRODUCT_ID          0xc52b
+#define USB_VENDOR_ID           0x04d9 //0x46d
+#define USB_PRODUCT_ID          0xa293 //0xc52b
 
 static libusb_context *usb_ctx;
 static libusb_device_handle *usb_device_handle;
 static const struct libusb_interface *usb_iface;
 static const struct libusb_interface_descriptor *usb_iface_desc;
+static libusb_hotplug_callback_handle usb_callback_handle;
 struct libusb_transfer *usb_transfer_in = NULL;
 static struct timeval usb_timeout = {
     .tv_sec = 10,
@@ -172,64 +173,84 @@ static void usb_event_poll(void) {
     }
 }
 
-static int usb_setup(void) {
-	int rc;
+static int usb_hotplug_callback(struct libusb_context *ctx, struct libusb_device *device,
+                     libusb_hotplug_event event, void *user_data) {
+    int rc;
     struct libusb_device_descriptor desc;
     struct libusb_config_descriptor *config;
+
+    (void)libusb_get_device_descriptor(device, &desc);
+
+    if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event) {
+        rc = libusb_open(device, &usb_device_handle);
+        if (LIBUSB_SUCCESS != rc) {
+            printf("[USB] could not open harmony device\n");
+        } else {
+            printf("[USB] device found\n");
+
+            libusb_get_config_descriptor(device, USB_CONFIG_INDEX, &config);
+            usb_iface = &config->interface[USB_INTERFACE_INDEX];
+            usb_iface_desc = &usb_iface->altsetting[USB_ALT_SETTING_INDEX];
+        
+            // Detach & claim interface from kernel driver
+            rc = libusb_detach_kernel_driver(usb_device_handle, USB_INTERFACE_INDEX);
+            if (rc != LIBUSB_SUCCESS && rc != LIBUSB_ERROR_NOT_FOUND) {
+                printf("[USB] detach kernel driver failed, rc: %d\n", rc);
+                return rc;
+            }
+
+            rc = libusb_claim_interface(usb_device_handle, USB_INTERFACE_INDEX);
+            if (rc != LIBUSB_SUCCESS) {
+                printf("[USB] claim interface failed, rc: %d\n", rc);
+                return rc;
+            }
+
+            usb_transfer_in = libusb_alloc_transfer(0);
+            libusb_fill_interrupt_transfer(usb_transfer_in, usb_device_handle, 
+                usb_iface_desc->endpoint[USB_ENDPOINT_INDEX].bEndpointAddress,
+                usb_in_buffer, sizeof(usb_in_buffer),
+                usb_callback, NULL, 0);
+
+            rc = libusb_submit_transfer(usb_transfer_in);
+            if (rc != LIBUSB_SUCCESS) {
+                printf("[USB] submit transfer failed, rc: %d\n", rc);
+                return rc;
+            }
+
+            printf("[USB] transfer initialized\n");
+        }
+    } else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
+        if (usb_device_handle) {
+            printf("[USB] device removed\n");
+            libusb_cancel_transfer(usb_transfer_in);
+            libusb_free_transfer(usb_transfer_in);
+            libusb_release_interface(usb_device_handle, USB_INTERFACE_INDEX);
+            libusb_attach_kernel_driver(usb_device_handle, USB_INTERFACE_INDEX);
+            libusb_close(usb_device_handle);
+            usb_device_handle = NULL;
+        }
+    } else {
+        printf("[USB] unhandled event %d\n", event);
+    }
+
+  return 0;
+}
+
+static int usb_setup(void) {
+	int rc;
  
     printf("[USB] initializing...\n");
  
     libusb_init(&usb_ctx);
     libusb_set_option(usb_ctx, LIBUSB_OPTION_LOG_LEVEL, LIBUSB_LOG_LEVEL_WARNING);
  
-    // Look at the keyboard based on vendor and device id
-    usb_device_handle = libusb_open_device_with_vid_pid(usb_ctx, USB_VENDOR_ID, USB_PRODUCT_ID);
-
-	if (usb_device_handle == NULL) {
-		printf("[USB] open device failed\n");
-		return LIBUSB_ERROR_IO;
-	}
- 
-    printf("[USB] harmony device found\n");
- 
-    // Get interface
-    libusb_device *device = libusb_get_device(usb_device_handle);
-	if (device == NULL) {
-		printf("[USB] get device failed\n");
-		return LIBUSB_ERROR_IO;
-	}
-
-    libusb_get_device_descriptor(device, &desc);
-    libusb_get_config_descriptor(device, USB_CONFIG_INDEX, &config);
-    usb_iface = &config->interface[USB_INTERFACE_INDEX];
-    usb_iface_desc = &usb_iface->altsetting[USB_ALT_SETTING_INDEX];
- 
-    // Detach & claim interface from kernel driver
-    rc = libusb_detach_kernel_driver(usb_device_handle, USB_INTERFACE_INDEX);
-	if (rc != LIBUSB_SUCCESS && rc != LIBUSB_ERROR_NOT_FOUND) {
-		printf("[USB] detach kernel driver failed, rc: %d\n", rc);
-		return rc;
-	}
-
-    rc = libusb_claim_interface(usb_device_handle, USB_INTERFACE_INDEX);
-	if (rc != LIBUSB_SUCCESS) {
-		printf("[USB] claim interface failed, rc: %d\n", rc);
-		return rc;
-	}
-
-    usb_transfer_in = libusb_alloc_transfer(0);
-    libusb_fill_interrupt_transfer(usb_transfer_in, usb_device_handle, 
-        usb_iface_desc->endpoint[USB_ENDPOINT_INDEX].bEndpointAddress,
-        usb_in_buffer, sizeof(usb_in_buffer),
-        usb_callback, NULL, 0);
-
-    rc = libusb_submit_transfer(usb_transfer_in);
-    if (rc != LIBUSB_SUCCESS) {
-		printf("[USB] submit transfer failed, rc: %d\n", rc);
-		return rc;
-	}
-
-    printf("[USB] transfer initialized\n");
+    rc = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, 
+                                        LIBUSB_HOTPLUG_ENUMERATE, USB_VENDOR_ID, USB_PRODUCT_ID, LIBUSB_HOTPLUG_MATCH_ANY, 
+                                        usb_hotplug_callback, NULL, &usb_callback_handle);
+    if (LIBUSB_SUCCESS != rc) {
+        printf("[USB] hotplug register failed, rc: %d\n", rc);
+        return rc;
+    }
 
 	return LIBUSB_SUCCESS;
 }
@@ -237,12 +258,8 @@ static int usb_setup(void) {
 static int usb_teardown(void) {
     printf("[USB] closing..\n");
 
-    libusb_cancel_transfer(usb_transfer_in);
-    libusb_free_transfer(usb_transfer_in);
+    libusb_hotplug_deregister_callback(NULL, usb_callback_handle);
 
-    libusb_release_interface(usb_device_handle, USB_INTERFACE_INDEX);
-    libusb_attach_kernel_driver(usb_device_handle, USB_INTERFACE_INDEX);
-    libusb_close(usb_device_handle);
     libusb_exit(usb_ctx);
 
 	return 0;
@@ -275,15 +292,15 @@ int main(int argc, char* argv[]) {
 
 	int rc;
 
-    rc = usb_setup();
-	if (rc != LIBUSB_SUCCESS) {
-		printf("[USB] usb setup failed, rc: %d\n", rc);
-		return rc;
-	}
-
 	rc = mqtt_setup();
 	if (rc != MQTTASYNC_SUCCESS) {
 		printf("[MQTT] mqtt setup failed, rc: %d\n", rc);
+		return rc;
+	}
+
+    rc = usb_setup();
+	if (rc != LIBUSB_SUCCESS) {
+		printf("[USB] usb setup failed, rc: %d\n", rc);
 		return rc;
 	}
 
@@ -291,8 +308,8 @@ int main(int argc, char* argv[]) {
         usb_event_poll();
     }
 
-	mqtt_teardown();
     usb_teardown();
+    mqtt_teardown();
 
     return rc;
 }

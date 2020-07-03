@@ -7,6 +7,8 @@ static int usb_teardown(void);
 
 static void usb_callback(struct libusb_transfer *transfer);
 static void usb_event_poll(void);
+static int usb_hotplug_callback(struct libusb_context *ctx, struct libusb_device *dev,
+                                libusb_hotplug_event event, void *user_data);
 
 static int mqtt_setup(void);
 static int mqtt_teardown(void);
