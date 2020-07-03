@@ -319,11 +319,11 @@ static void ble_hid_packet_handler(uint8_t packet_type, uint16_t channel, uint8_
                     switch (hci_event_hids_meta_get_subevent_code(packet)) {
                         case HIDS_SUBEVENT_INPUT_REPORT_ENABLE: {
                             ble_con_handle = hids_subevent_input_report_enable_get_con_handle(packet);
-                        	printf("[BLE HID] input report enabled: %u\n", hids_subevent_input_report_enable_get_enable(packet));
+                            printf("[BLE HID] input report enabled: %u\n", hids_subevent_input_report_enable_get_enable(packet));
 
-							if (ble_hid_state == BLE_HID_STATE_CONNECTED) {
-								ble_hid_change_state(BLE_HID_STATE_IDLE);
-							}
+                            if (ble_hid_state == BLE_HID_STATE_CONNECTED) {
+                                ble_hid_change_state(BLE_HID_STATE_IDLE);
+                            }
                             break;
                         }
                         case HIDS_SUBEVENT_BOOT_KEYBOARD_INPUT_REPORT_ENABLE: {
@@ -458,7 +458,7 @@ static void mqtt_on_connection_lost(void *context, char *cause) {
 
     printf("[MQTT] reconnecting...\n");
 
-	int rc = MQTTAsync_reconnect((MQTTAsync) context);
+    int rc = MQTTAsync_reconnect((MQTTAsync) context);
     if (rc != MQTTASYNC_SUCCESS) {
         printf("[MQTT] reconnect failed, rc: %d\n", rc); 
     }
@@ -471,27 +471,27 @@ static void mqtt_on_connect_failed(void* context, MQTTAsync_failureData* respons
 static void mqtt_on_connected(void *context, char *cause) {
     printf("[MQTT] connected\n");
 
-	MQTTAsync client = (MQTTAsync)context;
-	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
-	opts.onSuccess = mqtt_on_subscribe;
-	opts.onFailure = mqtt_on_subscribe_failed;
-	opts.context = client;
+    MQTTAsync client = (MQTTAsync)context;
+    MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
+    opts.onSuccess = mqtt_on_subscribe;
+    opts.onFailure = mqtt_on_subscribe_failed;
+    opts.context = client;
     int rc = MQTTAsync_subscribe(client, mqtt_topic, MQTT_QOS, &opts);
-	if (rc != MQTTASYNC_SUCCESS) {
-		printf("[MQTT] subscribe failed, rc: %d\n", rc);
-	}
+    if (rc != MQTTASYNC_SUCCESS) {
+        printf("[MQTT] subscribe failed, rc: %d\n", rc);
+    }
 }
 
 static void mqtt_on_subscribe(void* context, MQTTAsync_successData* response) {
-	printf("[MQTT] subscribed\n");
+    printf("[MQTT] subscribed\n");
 }
 
 static void mqtt_on_subscribe_failed(void* context, MQTTAsync_failureData* response) {
-	printf("[MQTT] subscribe failed: %s, rc: %d\n", response->message, response->code);
+    printf("[MQTT] subscribe failed: %s, rc: %d\n", response->message, response->code);
 }
 
 static int mqtt_setup(void) {
-	printf("[MQTT] creating...\n");
+    printf("[MQTT] creating...\n");
 
     int rc = MQTTAsync_create(&mqtt_client, mqtt_address, MQTT_CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
@@ -500,7 +500,7 @@ static int mqtt_setup(void) {
         return rc;
     }
 
-	rc = MQTTAsync_setCallbacks(mqtt_client, mqtt_client, mqtt_on_connection_lost, mqtt_message_arrived, NULL);
+    rc = MQTTAsync_setCallbacks(mqtt_client, mqtt_client, mqtt_on_connection_lost, mqtt_message_arrived, NULL);
     if (rc != MQTTASYNC_SUCCESS) {
         printf("[MQTT] setCallbacks failed, rc: %d\n", rc);
         return rc;
@@ -512,40 +512,40 @@ static int mqtt_setup(void) {
         return rc;
     }
 
-	MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
+    MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
     conn_opts.keepAliveInterval = 20;
     conn_opts.cleansession = 1;
     conn_opts.context = mqtt_client;
     conn_opts.username = mqtt_username;
     conn_opts.password = mqtt_password;
     conn_opts.onFailure = mqtt_on_connect_failed;
-	conn_opts.automaticReconnect = 1;
+    conn_opts.automaticReconnect = 1;
 
     printf("[MQTT] connecting...\n");
-	rc = MQTTAsync_connect(mqtt_client, &conn_opts);
+    rc = MQTTAsync_connect(mqtt_client, &conn_opts);
     if (rc != MQTTASYNC_SUCCESS) {
         printf("[MQTT] connect failed, rc: %d\n", rc);
         return rc;
     }
 
-	return rc;
+    return rc;
 }
 
 static int mqtt_teardown(void) {
-	printf("[MQTT] disconnecting...\n");
+    printf("[MQTT] disconnecting...\n");
 
-	MQTTAsync_disconnectOptions opts = MQTTAsync_disconnectOptions_initializer;
-	opts.context = mqtt_client;
+    MQTTAsync_disconnectOptions opts = MQTTAsync_disconnectOptions_initializer;
+    opts.context = mqtt_client;
 
-	int rc = MQTTAsync_disconnect(mqtt_client, &opts);
-	if (rc != MQTTASYNC_SUCCESS) {
-		printf("[MQTT] disconnect failed, rc: %d\n", rc);
-		return rc;
-	}
+    int rc = MQTTAsync_disconnect(mqtt_client, &opts);
+    if (rc != MQTTASYNC_SUCCESS) {
+        printf("[MQTT] disconnect failed, rc: %d\n", rc);
+        return rc;
+    }
 
     MQTTAsync_destroy(&mqtt_client);
 
-	return 0;
+    return 0;
 }
 
 int btstack_main(int argc, char * argv[]) {
@@ -556,16 +556,16 @@ int btstack_main(int argc, char * argv[]) {
         switch(opt)  
         {  
             case 'a':  
-				mqtt_address = optarg;
+                mqtt_address = optarg;
                 break;  
             case 't':  
-				mqtt_topic = optarg;
+                mqtt_topic = optarg;
                 break;  
             case 'u':  
-				mqtt_username = optarg;
+                mqtt_username = optarg;
                 break;  
             case 'p':  
-				mqtt_password = optarg;
+                mqtt_password = optarg;
                 break;  
             case '?':  
                 printf("unknown option: %c\n", optopt); 

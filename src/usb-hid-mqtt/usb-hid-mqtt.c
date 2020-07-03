@@ -52,7 +52,7 @@ static void mqtt_on_connection_lost(void *context, char *cause) {
 
     printf("[MQTT] reconnecting...\n");
 
-	int rc = MQTTAsync_reconnect((MQTTAsync) context);
+    int rc = MQTTAsync_reconnect((MQTTAsync) context);
     if (rc != MQTTASYNC_SUCCESS) {
         printf("[MQTT] reconnect failed, rc: %d\n", rc);
     }
@@ -67,11 +67,11 @@ static void mqtt_on_connected(void *context, char *cause) {
 }
 
 static int mqtt_message_arrived(void* context, char* topic_name, int topic_len, MQTTAsync_message* m) {
-	return 1;
+    return 1;
 }
 
 static int mqtt_setup(void) {
-	printf("[MQTT] creating...\n");
+    printf("[MQTT] creating...\n");
 
     int rc = MQTTAsync_create(&mqtt_client, mqtt_address, MQTT_CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
@@ -80,7 +80,7 @@ static int mqtt_setup(void) {
         return rc;
     }
 
-	rc = MQTTAsync_setCallbacks(mqtt_client, mqtt_client, mqtt_on_connection_lost, mqtt_message_arrived, NULL);
+    rc = MQTTAsync_setCallbacks(mqtt_client, mqtt_client, mqtt_on_connection_lost, mqtt_message_arrived, NULL);
     if (rc != MQTTASYNC_SUCCESS) {
         printf("[MQTT] setCallbacks failed, rc: %d\n", rc);
         return rc;
@@ -92,40 +92,40 @@ static int mqtt_setup(void) {
         return rc;
     }
 
-	MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
+    MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
     conn_opts.keepAliveInterval = 20;
     conn_opts.cleansession = 1;
     conn_opts.context = mqtt_client;
     conn_opts.username = mqtt_username;
     conn_opts.password = mqtt_password;
     conn_opts.onFailure = mqtt_on_connect_failed;
-	conn_opts.automaticReconnect = 1;
+    conn_opts.automaticReconnect = 1;
 
-	printf("[MQTT] connecting...\n");
-	rc = MQTTAsync_connect(mqtt_client, &conn_opts);
+    printf("[MQTT] connecting...\n");
+    rc = MQTTAsync_connect(mqtt_client, &conn_opts);
     if (rc != MQTTASYNC_SUCCESS) {
         printf("[MQTT] connect failed, rc: %d\n", rc);
         return rc;
     }
 
-	return rc;
+    return rc;
 }
 
 static int mqtt_teardown(void) {
-	printf("[MQTT] disconnecting...\n");
+    printf("[MQTT] disconnecting...\n");
 
-	MQTTAsync_disconnectOptions opts = MQTTAsync_disconnectOptions_initializer;
-	opts.context = mqtt_client;
+    MQTTAsync_disconnectOptions opts = MQTTAsync_disconnectOptions_initializer;
+    opts.context = mqtt_client;
 
-	int rc = MQTTAsync_disconnect(mqtt_client, &opts);
-	if (rc != MQTTASYNC_SUCCESS) {
-		printf("[MQTT] disconnect failed, rc: %d\n", rc);
-		return rc;
-	}
+    int rc = MQTTAsync_disconnect(mqtt_client, &opts);
+    if (rc != MQTTASYNC_SUCCESS) {
+        printf("[MQTT] disconnect failed, rc: %d\n", rc);
+        return rc;
+    }
 
     MQTTAsync_destroy(&mqtt_client);
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -133,37 +133,37 @@ static int mqtt_teardown(void) {
  */
 static void usb_callback(struct libusb_transfer *transfer) {
     if (transfer->actual_length > 0 && 
-		transfer->buffer[0] == 0x20 &&
-		(transfer->buffer[2] == 0x01 || transfer->buffer[2] == 0x03)) {
+        transfer->buffer[0] == 0x20 &&
+        (transfer->buffer[2] == 0x01 || transfer->buffer[2] == 0x03)) {
         printf("[USB] Frame ");
         for(int i = 0; i< transfer->actual_length; i++) {
             printf("%#x ", transfer->buffer[i]);
         }
         printf("\n");
 
-		if (MQTTAsync_isConnected(mqtt_client)) {
-			MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
-			MQTTAsync_message pubmsg = MQTTAsync_message_initializer;
-			opts.context = mqtt_client;
-			pubmsg.payload = transfer->buffer;
-			pubmsg.payloadlen = transfer->actual_length;
-			pubmsg.qos = MQTT_QOS;
-			pubmsg.retained = 0;
+        if (MQTTAsync_isConnected(mqtt_client)) {
+            MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
+            MQTTAsync_message pubmsg = MQTTAsync_message_initializer;
+            opts.context = mqtt_client;
+            pubmsg.payload = transfer->buffer;
+            pubmsg.payloadlen = transfer->actual_length;
+            pubmsg.qos = MQTT_QOS;
+            pubmsg.retained = 0;
 
-			int rc = MQTTAsync_sendMessage(mqtt_client, mqtt_topic, &pubmsg, &opts);
-			if (rc != MQTTASYNC_SUCCESS) {
-				printf("[MQTT] sendMessage failed, rc: %d\n", rc);
-			}
-		} else {
-			printf("[USB] Received frame, but MQTT is not connected\n");
-		}
+            int rc = MQTTAsync_sendMessage(mqtt_client, mqtt_topic, &pubmsg, &opts);
+            if (rc != MQTTASYNC_SUCCESS) {
+                printf("[MQTT] sendMessage failed, rc: %d\n", rc);
+            }
+        } else {
+            printf("[USB] Received frame, but MQTT is not connected\n");
+        }
     }
 
     int rc = libusb_submit_transfer(transfer);
 
     if (rc != LIBUSB_SUCCESS) {
-		printf("[USB] submit transfer failed, rc: %d\n", rc);
-	}
+        printf("[USB] submit transfer failed, rc: %d\n", rc);
+    }
 }
 
 static void usb_event_poll(void) {
@@ -237,7 +237,7 @@ static int usb_hotplug_callback(struct libusb_context *ctx, struct libusb_device
 }
 
 static int usb_setup(void) {
-	int rc;
+    int rc;
  
     printf("[USB] initializing...\n");
  
@@ -252,7 +252,7 @@ static int usb_setup(void) {
         return rc;
     }
 
-	return LIBUSB_SUCCESS;
+    return LIBUSB_SUCCESS;
 }
 
 static int usb_teardown(void) {
@@ -262,7 +262,7 @@ static int usb_teardown(void) {
 
     libusb_exit(usb_ctx);
 
-	return 0;
+    return 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -273,16 +273,16 @@ int main(int argc, char* argv[]) {
         switch(opt)  
         {  
             case 'a':  
-				mqtt_address = optarg;
+                mqtt_address = optarg;
                 break;  
             case 't':  
-				mqtt_topic = optarg;
+                mqtt_topic = optarg;
                 break;  
             case 'u':  
-				mqtt_username = optarg;
+                mqtt_username = optarg;
                 break;  
             case 'p':  
-				mqtt_password = optarg;
+                mqtt_password = optarg;
                 break;  
             case '?':  
                 printf("unknown option: %c\n", optopt); 
@@ -290,19 +290,19 @@ int main(int argc, char* argv[]) {
         }  
     }  
 
-	int rc;
+    int rc;
 
-	rc = mqtt_setup();
-	if (rc != MQTTASYNC_SUCCESS) {
-		printf("[MQTT] mqtt setup failed, rc: %d\n", rc);
-		return rc;
-	}
+    rc = mqtt_setup();
+    if (rc != MQTTASYNC_SUCCESS) {
+        printf("[MQTT] mqtt setup failed, rc: %d\n", rc);
+        return rc;
+    }
 
     rc = usb_setup();
-	if (rc != LIBUSB_SUCCESS) {
-		printf("[USB] usb setup failed, rc: %d\n", rc);
-		return rc;
-	}
+    if (rc != LIBUSB_SUCCESS) {
+        printf("[USB] usb setup failed, rc: %d\n", rc);
+        return rc;
+    }
 
     while (1) {
         usb_event_poll();
