@@ -25,11 +25,11 @@ static const char *mqtt_password;
  * USB variables
  */
 #define USB_CONFIG_INDEX        0
-#define USB_INTERFACE_INDEX     0
+#define USB_INTERFACE_INDEX     2
 #define USB_ALT_SETTING_INDEX   0
 #define USB_ENDPOINT_INDEX      0
-#define USB_VENDOR_ID           0x04d9 //0x46d
-#define USB_PRODUCT_ID          0xa293 //0xc52b
+#define USB_VENDOR_ID           0x46d
+#define USB_PRODUCT_ID          0xc52b
 
 static libusb_context *usb_ctx;
 static libusb_device_handle *usb_device_handle;
