@@ -11,6 +11,7 @@ OBJDIR := .objs
 
 VPATH += ${BTSTACK_ROOT}/src
 VPATH += ${BTSTACK_ROOT}/src/ble
+VPATH += ${BTSTACK_ROOT}/src/classic
 VPATH += ${BTSTACK_ROOT}/platform/posix
 VPATH += ${BTSTACK_ROOT}/src/ble/gatt-service
 VPATH += ${BTSTACK_ROOT}/chipset/bcm
@@ -23,6 +24,7 @@ SRCS := \
 	btstack_chipset_bcm_download_firmware.c \
 	btstack_run_loop_posix.c \
 	btstack_tlv_posix.c \
+	btstack_link_key_db_tlv.c \
 	btstack_uart_block_posix.c \
 	btstack_slip.c \
 	hci_transport_h4.c \

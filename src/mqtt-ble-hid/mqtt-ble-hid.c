@@ -310,7 +310,7 @@ static void ble_hid_packet_handler(uint8_t packet_type, uint16_t channel, uint8_
                             pthread_mutex_unlock(&buffer_lock);
 
                             // request min con interval 15 ms for iOS 11+
-                            gap_request_connection_parameter_update(ble_con_handle, 12, 12, 0, 0x0048);
+                            //gap_request_connection_parameter_update(ble_con_handle, 12, 12, 0, 0x0048);
                             break;
                         }
                         case HCI_SUBEVENT_LE_CONNECTION_UPDATE_COMPLETE: {
