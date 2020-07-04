@@ -1,5 +1,5 @@
 ifeq ($(PREFIX),)
-    PREFIX := /usr/local
+	PREFIX := /usr/local
 endif
 
 mqtt-ble-hid-src = $(wildcard src/mqtt-ble-hid/*.c) \
@@ -12,7 +12,7 @@ mqtt-ble-hid-gatt = $(mqtt-ble-hid-gatt-src:.gatt=.h)
 usb-hid-mqtt-src = $(wildcard src/usb-hid-mqtt/*.c)
 usb-hid-mqtt-obj = $(usb-hid-mqtt-src:.c=.o)
 
-CFLAGS += -std=gnu99
+CFLAGS += -std=gnu99 -Wall -Werror -fPIC -O2 -g
 
 CFLAGS:=$(filter-out -Wredundant-decls,${CFLAGS})
 CFLAGS:=$(filter-out -Wshadow,${CFLAGS})

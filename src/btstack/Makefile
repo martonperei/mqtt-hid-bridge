@@ -1,5 +1,5 @@
 ifeq ($(PREFIX),)
-    PREFIX := /usr/local
+	PREFIX := /usr/local
 endif
 
 LDCONFIG ?= /sbin/ldconfig
@@ -8,84 +8,81 @@ BTSTACK_ROOT ?= ../../lib/btstack
 
 VPATH += ${BTSTACK_ROOT}/src
 VPATH += ${BTSTACK_ROOT}/src/ble
-VPATH += ${BTSTACK_ROOT}/src/ble/gatt-service
+VPATH += ${BTSTACK_ROOT}/src/classic
 VPATH += ${BTSTACK_ROOT}/platform/posix
+VPATH += ${BTSTACK_ROOT}/src/ble/gatt-service
 VPATH += ${BTSTACK_ROOT}/chipset/bcm
 VPATH += ${BTSTACK_ROOT}/port/raspi
+VPATH += ${BTSTACK_ROOT}/3rd-party/micro-ecc
+VPATH += ${BTSTACK_ROOT}/3rd-party/rijndael
 
 BTSTACK_RASPI_SOURCES = \
-	btstack_control_raspi.c \
-	raspi_get_model.c \
+	btstack_control_raspi.c	\
+	raspi_get_model.c		\
 	main.c
 
 BTSTACK_SOURCES = \
-	btstack_chipset_bcm.c \
-	btstack_chipset_bcm_download_firmware.c \
-	btstack_link_key_db_tlv.c \
-	btstack_run_loop_posix.c \
-	btstack_tlv.c 		\
-	btstack_util.c 		\
-	btstack_tlv_posix.c \
-	btstack_uart_block_posix.c \
-	btstack_slip.c \
-	hci_transport_h4.c \
-	hci_transport_h5.c \
-	le_device_db_tlv.c \
-	rijndael.c \
-	btstack_memory.c            \
-	btstack_linked_list.c	    \
-	btstack_memory_pool.c       \
-	btstack_run_loop.c		    \
-	ad_parser.c                 \
-	hci.c			            \
-	hci_cmd.c		            \
-	hci_dump.c		            \
-	l2cap.c			            \
-	l2cap_signaling.c	        \
-	btstack_audio.c             \
-	btstack_tlv.c               \
-	btstack_crypto.c            \
-	uECC.c                      \
-	sm.c                        \
-	hci.c			            \
-	device_id_server.c          \
-	ad_parser.c                 \
-	hci_cmd.c		            \
-	hci_dump.c		            \
-	l2cap.c			            \
-	l2cap_signaling.c	        \
-	rfcomm.c                    \
-	btstack_run_loop_posix.c 	\
-	btstack_stdin_posix.c 	\
-	btstack_link_key_db_tlv.c 	\
-	le_device_db_tlv.c 			\
-	wav_util.c 					\
-	sdp_util.c	                \
-	sdp_server.c		        \
-	sdp_client.c 				\
-	sdp_client_rfcomm.c 		\
-	sm.c 						\
-	uECC.c 					    \
-	spp_server.c 				\
+	btstack_chipset_bcm.c		\
+	btstack_link_key_db_tlv.c	\
+	btstack_chipset_bcm_download_firmware.c	\
+	btstack_slip.c				\
+	btstack_tlv.c				\
+	btstack_tlv_posix.c			\
+	btstack_util.c				\
+	btstack_uart_block_posix.c	\
+	btstack_run_loop.c			\
+	btstack_run_loop_posix.c	\
+	btstack_stdin_posix.c		\
+	btstack_memory.c			\
+	btstack_linked_list.c		\
+	btstack_memory_pool.c		\
+	btstack_ring_buffer.c		\
+	btstack_audio.c				\
+	btstack_crypto.c			\
+	hci.c						\
+	hci_cmd.c					\
+	hci_dump.c					\
+	hci_transport_h4.c			\
+	hci_transport_h5.c			\
+	ad_parser.c					\
+	device_id_server.c			\
+	l2cap.c						\
+	l2cap_signaling.c			\
+	rfcomm.c					\
+	wav_util.c					\
+	sdp_util.c					\
+	sdp_server.c				\
+	sdp_client.c				\
+	sdp_client_rfcomm.c			\
+	spp_server.c				\
 	uECC.c						\
-	att_dispatch.c       	    \
-	att_db.c 				 	\
-	att_server.c        	    \
-	sm.c 				 	    \
-	battery_service_server.c    \
-	device_information_service_server.c \
-	btstack_ring_buffer.c
+	rijndael.c					\
+	att_db.c					\
+	att_db_util.c				\
+	att_dispatch.c				\
+	att_server.c				\
+	gatt_client.c				\
+	le_device_db_tlv.c			\
+	sm.c						\
+	battery_service_server.c	\
+	device_information_service_server.c	\
+
 
 BTSTACK_OBJECTS = $(BTSTACK_SOURCES:.c=.o)
 BTSTACK_RASPI_OBJECTS = $(BTSTACK_RASPI_SOURCES:.c=.o)
 
 CFLAGS += \
-	-I${BTSTACK_ROOT}/port/raspi \
-	-I${BTSTACK_ROOT}/src/ble \
-	-I${BTSTACK_ROOT}/src \
-	-I$(BTSTACK_ROOT)/platform/posix \
-	-I$(BTSTACK_ROOT)/chipset/bcm 
-CFLAGS += -Wall -Werror
+	-I${BTSTACK_ROOT}/src					\
+	-I${BTSTACK_ROOT}/src/ble				\
+	-I${BTSTACK_ROOT}/src/ble/gatt-service	\
+	-I${BTSTACK_ROOT}/src/classic			\
+	-I$(BTSTACK_ROOT)/platform/posix		\
+	-I$(BTSTACK_ROOT)/chipset/bcm			\
+	-I${BTSTACK_ROOT}/port/raspi			\
+	-I${BTSTACK_ROOT}/3rd-party/rijndael	\
+	-I${BTSTACK_ROOT}/3rd-party/micro-ecc	\
+
+CFLAGS += -Wall -Werror -fPIC -O2 -g
 
 CC = arm-linux-gnueabihf-gcc
 
@@ -100,6 +97,12 @@ tlv_path:
 libbtstack_raspi.a: $ $(BTSTACK_RASPI_OBJECTS)
 	ar rcs $@ $^
 
+$(BTSTACK_SOURCES:.c=.d):%.d:%.c
+	$(CC) $(CFLAGS) -MM $< >$@
+
+include $(SRCS:.c=.d)
+
+.PHONY: all
 all: tlv_path libbtstack.so libbtstack_raspi.a
 
 .PHONY: clean
