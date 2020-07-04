@@ -1,5 +1,3 @@
-*.o
-*.a
-*.so
+.deps/
+.objs/
 btstack_*
-out/

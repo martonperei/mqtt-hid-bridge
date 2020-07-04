@@ -1,9 +1,9 @@
 
-// src/mqtt-ble-hid/services/mqtt-ble-hid-services.h generated from src/mqtt-ble-hid/services/mqtt-ble-hid-services.gatt for BTstack
+// mqtt-ble-hid-services.h generated from mqtt-ble-hid-services.gatt for BTstack
 // it needs to be regenerated when the .gatt file is updated. 
 
-// To generate src/mqtt-ble-hid/services/mqtt-ble-hid-services.h:
-// ./lib/btstack/tool/compile_gatt.py src/mqtt-ble-hid/services/mqtt-ble-hid-services.gatt src/mqtt-ble-hid/services/mqtt-ble-hid-services.h
+// To generate mqtt-ble-hid-services.h:
+// ../../lib/btstack/tool/compile_gatt.py mqtt-ble-hid-services.gatt mqtt-ble-hid-services.h
 
 // att db format version 1
 

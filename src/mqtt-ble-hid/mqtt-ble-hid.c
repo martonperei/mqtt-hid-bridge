@@ -13,8 +13,8 @@
 #include "ble/gatt-service/battery_service_server.h"
 #include "ble/gatt-service/device_information_service_server.h"
 
-#include "services/hids_device_remote.h"
-#include "services/mqtt-ble-hid-services.h"
+#include "hids_device_remote.h"
+#include "mqtt-ble-hid-services.h"
 
 /**
  * HID buffer
@@ -164,7 +164,7 @@ static void ble_hid_setup(void) {
     // setup SM: Display only
     sm_init();
     sm_set_authentication_requirements(SM_AUTHREQ_SECURE_CONNECTION | SM_AUTHREQ_BONDING);
-    sm_set_io_capabilities(IO_CAPABILITY_NO_INPUT_NO_OUTPUT);
+    sm_set_io_capabilities(IO_CAPABILITY_DISPLAY_ONLY);
 
     // setup ATT server
     att_server_init(profile_data, NULL, NULL);
@@ -259,6 +259,15 @@ static void ble_hid_packet_handler(uint8_t packet_type, uint16_t channel, uint8_
                 case SM_EVENT_JUST_WORKS_REQUEST: {
                     printf("[BLE HID] pairing method 'Just Works' requested\n");
                     sm_just_works_confirm(sm_event_just_works_request_get_handle(packet));
+                    break;
+                }
+                case SM_EVENT_NUMERIC_COMPARISON_REQUEST: {
+                    printf("[BLE HID] confirming numeric comparison: %"PRIu32"\n", sm_event_numeric_comparison_request_get_passkey(packet));
+                    sm_numeric_comparison_confirm(sm_event_passkey_display_number_get_handle(packet));
+                    break;
+                }
+                case SM_EVENT_PASSKEY_DISPLAY_NUMBER: {
+                    printf("[BLE HID] passkey: %"PRIu32"\n", sm_event_passkey_display_number_get_passkey(packet));
                     break;
                 }
                 case SM_EVENT_PAIRING_COMPLETE: {
