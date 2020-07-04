@@ -1,5 +1,5 @@
 PRIMARY_SERVICE, GAP_SERVICE
-CHARACTERISTIC, GAP_DEVICE_NAME, READ, "MQTT BLE HID Bridge"
+CHARACTERISTIC, GAP_DEVICE_NAME, READ, "MQTT HID Bridge"
 
 // add Battery Service
 #import <battery_service.gatt>

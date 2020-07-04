@@ -1,3 +1,5 @@
 .deps/
 .objs/
 btstack_*
+mqtt-ble-hid
+usb-hid-mqtt
