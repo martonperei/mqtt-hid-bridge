@@ -49,7 +49,7 @@ static const char *mqtt_password;
 #define BLE_HID_STATE_IDLE 3
 #define BLE_HID_STATE_BUSY 4
 
-#define BLE_HID_BUFFER_POLL_INTERVAL 50
+#define BLE_HID_BUFFER_POLL_INTERVAL 15
 
 static hci_con_handle_t ble_con_handle = HCI_CON_HANDLE_INVALID;
 static uint8_t ble_hid_state = BLE_HID_STATE_OFFLINE;
@@ -199,7 +199,7 @@ static void ble_hid_setup(void) {
     // register for HIDS
     hids_device_register_packet_handler(ble_hid_packet_handler);
 
-    ble_hid_buffer_poll_timer.process = &ble_hid_buffer_poll_handler;
+    btstack_run_loop_set_timer_handler(&ble_hid_buffer_poll_timer, &ble_hid_buffer_poll_handler);
     btstack_run_loop_set_timer(&ble_hid_buffer_poll_timer, BLE_HID_BUFFER_POLL_INTERVAL);
     btstack_run_loop_add_timer(&ble_hid_buffer_poll_timer);
 }
