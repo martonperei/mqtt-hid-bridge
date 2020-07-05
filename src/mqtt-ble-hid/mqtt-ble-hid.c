@@ -24,7 +24,7 @@ static btstack_ring_buffer_t buffer_hid_reports;
 static pthread_mutex_t buffer_lock;
 
 #define HID_REPORT_KEYBOARD 0x01
-#define HID_REPORT_CONSUMER 0x03
+#define HID_REPORT_CONSUMER 0x02
 #define HID_REPORT_KEYBOARD_KEY_COUNT 6
 #define HID_REPORT_CONSUMER_KEY_COUNT 4
 
@@ -141,10 +141,10 @@ static const uint8_t ble_hid_descriptor_boot_mode[] = {
     0xA1, 0x01,       // (MAIN)   COLLECTION         0x01 Application
     0x85, 0x02,       //   (GLOBAL) REPORT_ID          2
     0x19, 0x00,       //   (LOCAL)  USAGE_MINIMUM 
-    0x2A, 0x9C, 0x02, //   (LOCAL)  USAGE_MAXIMUM
+    0x2A, 0xFF, 0x03, //   (LOCAL)  USAGE_MAXIMUM
     0x15, 0x00,       //   (GLOBAL) LOGICAL_MINIMUM 
-    0x26, 0x9C, 0x02, //   (GLOBAL) LOGICAL_MAXIMUM    0x029C (668)
-    0x95, 0x01,       //   (GLOBAL) REPORT_COUNT       0x01 (1) Number of fields
+    0x26, 0xFF, 0x03, //   (GLOBAL) LOGICAL_MAXIMUM    0x029C (668)
+    0x95, 0x02,       //   (GLOBAL) REPORT_COUNT       0x01 (1) Number of fields
     0x75, 0x10,       //   (GLOBAL) REPORT_SIZE        0x10 (16) Number of bits per field
     0x81, 0x00,       //   (MAIN)   INPUT 
     0xC0              // (MAIN)   END_COLLECTION     Application
@@ -444,16 +444,8 @@ static int mqtt_message_arrived(void *context, char *topic_name, int topic_len, 
         printf("%#x ", buffer[i]);
     }
     printf("\n");
-
-    uint8_t report_id = buffer[2];
-    uint8_t report_len = 0;
-    if (report_id == HID_REPORT_KEYBOARD) {
-        report_len = HID_REPORT_KEYBOARD_KEY_COUNT + 2; // report_id + modifier
-    } else if (report_id == HID_REPORT_CONSUMER) {
-        report_len = HID_REPORT_CONSUMER_KEY_COUNT + 1; // report_id
-    }
     
-    btstack_ring_buffer_write(&buffer_hid_reports, (uint8_t*) &buffer[2], report_len); // [0] hid frame, [1] vendor, [2+] keys
+    btstack_ring_buffer_write(&buffer_hid_reports, (uint8_t*) buffer, message->payloadlen);
     pthread_mutex_unlock(&buffer_lock);
 
     MQTTAsync_freeMessage(&message);
