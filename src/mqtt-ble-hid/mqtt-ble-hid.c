@@ -437,16 +437,38 @@ static int mqtt_message_arrived(void *context, char *topic_name, int topic_len, 
 
     char* buffer = (char*) message->payload;
 
-    pthread_mutex_lock(&buffer_lock);
-
-    printf("[MQTT] frame ");
+    printf("[MQTT] frame, len: %d ", message->payloadlen);
     for(int i = 0; i< message->payloadlen; i++) {
         printf("%#x ", buffer[i]);
     }
     printf("\n");
-    
-    btstack_ring_buffer_write(&buffer_hid_reports, (uint8_t*) buffer, message->payloadlen);
-    pthread_mutex_unlock(&buffer_lock);
+
+    int msg_valid = !message->payloadlen == 0;
+
+    if (msg_valid) {
+        uint8_t report_id = buffer[0];
+        uint8_t report_len = 0;
+        if (report_id == HID_REPORT_KEYBOARD) {
+            report_len = HID_REPORT_KEYBOARD_KEY_COUNT + 2; // report_id + modifier
+        } else if (report_id == HID_REPORT_CONSUMER) {
+            report_len = HID_REPORT_CONSUMER_KEY_COUNT + 1; // report_id
+        } else {
+            printf("[MQTT] invalid report_id: %d\n", report_id);
+            msg_valid = 0;
+        }
+
+        if (message->payloadlen != report_len) {
+            printf("[MQTT] invalid report length: %d, expected: %d\n", message->payloadlen, report_len);
+            msg_valid = 0;
+        }
+
+        if (msg_valid) {
+            pthread_mutex_lock(&buffer_lock);
+            btstack_ring_buffer_write(&buffer_hid_reports, (uint8_t*) buffer, message->payloadlen);
+            pthread_mutex_unlock(&buffer_lock);
+        }
+    }
+
 
     MQTTAsync_freeMessage(&message);
     MQTTAsync_free(topic_name);
