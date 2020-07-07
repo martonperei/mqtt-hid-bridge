@@ -2,6 +2,8 @@ ifeq ($(PREFIX),)
 	PREFIX := /usr/local
 endif
 
+MQTT_ROOT ?= ../../lib/mqtt
+
 BIN := usb-hid-mqtt
 
 DEPDIR := .deps
@@ -15,7 +17,8 @@ OBJS = $(SRCS:%.c=$(OBJDIR)/%.o)
 CC := gcc
 LD := gcc
 
-CFLAGS := -std=gnu99 -Wall -Werror 
+CFLAGS := -std=gnu99 -Wall -Werror \
+	-I${MQTT_ROOT}/src
 
 LDFLAGS :=
 LDLIBS :=  -lusb-1.0 -lpthread -ludev -lpaho-mqtt3as
@@ -27,6 +30,9 @@ PRECOMPILE =
 POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 all: $(BIN)
+
+.PHONY: compile
+compile: $(OBJS)
 
 .PHONY: clean
 clean:

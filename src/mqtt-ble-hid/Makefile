@@ -3,6 +3,7 @@ ifeq ($(PREFIX),)
 endif
 
 BTSTACK_ROOT ?= ../../lib/btstack
+MQTT_ROOT ?= ../../lib/mqtt
 
 BIN := mqtt-ble-hid
 
@@ -79,17 +80,21 @@ CFLAGS := -std=gnu99 -Wall -Werror 			\
 	-I${BTSTACK_ROOT}/port/raspi			\
 	-I${BTSTACK_ROOT}/3rd-party/rijndael	\
 	-I${BTSTACK_ROOT}/3rd-party/micro-ecc	\
+	-I${MQTT_ROOT}/src
 
 LDFLAGS :=
-LDLIBS := -lpaho-mqtt3as -lpthread -lrt -lm
+LDLIBS := -lpaho-mqtt3as -lpthread -lrt -lm -ldl -llua5.3
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
 
-COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) -c -o $@
-LINK.o = $(LD) $(LDFLAGS) $(LDLIBS) -o $@
+COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS)  -c -o $@
+LINK.o = $(LD) $(LDFLAGS) $(LDLIBS) -o $@ 
 PRECOMPILE =
 POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 all: $(BIN)
+
+.PHONY: compile
+compile: $(OBJS)
 
 .PHONY: clean
 clean:

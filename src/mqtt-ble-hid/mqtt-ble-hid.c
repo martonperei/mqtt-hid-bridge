@@ -5,7 +5,10 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <pthread.h>
-#include "MQTTAsync.h"
+#include <MQTTAsync.h>
+#include <lua5.3/lualib.h>
+#include <lua5.3/lauxlib.h>
+#include <lua5.3/lua.h>
 
 #include "mqtt-ble-hid.h"
 
@@ -41,15 +44,23 @@ static const char *mqtt_username;
 static const char *mqtt_password;
 
 /**
+ * Lua variables
+ */
+static lua_State *lua;
+
+/**
  * BLE HID variables
  */
 #define BLE_HID_STATE_OFFLINE 0
 #define BLE_HID_STATE_ONLINE 1
-#define BLE_HID_STATE_CONNECTED 2
-#define BLE_HID_STATE_IDLE 3
-#define BLE_HID_STATE_BUSY 4
+#define BLE_HID_STATE_SLEEP 2
+#define BLE_HID_STATE_CONNECTED 3
+#define BLE_HID_STATE_IDLE 4
+#define BLE_HID_STATE_BUSY 5
 
 #define BLE_HID_BUFFER_POLL_INTERVAL 15
+#define BLE_HID_BUFFER_IDLE_POLL_INTERVAL 1000
+#define BLE_IDLE_TIMEOUT 10000 //600000
 
 static hci_con_handle_t ble_con_handle = HCI_CON_HANDLE_INVALID;
 static uint8_t ble_hid_state = BLE_HID_STATE_OFFLINE;
@@ -57,6 +68,8 @@ static btstack_packet_callback_registration_t ble_hci_event_callback_registratio
 static btstack_packet_callback_registration_t ble_sm_event_callback_registration;
 static uint8_t ble_hid_protocol_mode = 1;
 static btstack_timer_source_t ble_hid_buffer_poll_timer;
+// static btstack_timer_source_t ble_idle_timer;
+// static uint8_t ble_hid_is_idle = 0;
 
 static const uint8_t ble_adv_data[] = {
     // Flags general discoverable, BR/EDR not supported
@@ -202,6 +215,10 @@ static void ble_hid_setup(void) {
     btstack_run_loop_set_timer_handler(&ble_hid_buffer_poll_timer, &ble_hid_buffer_poll_handler);
     btstack_run_loop_set_timer(&ble_hid_buffer_poll_timer, BLE_HID_BUFFER_POLL_INTERVAL);
     btstack_run_loop_add_timer(&ble_hid_buffer_poll_timer);
+
+    // btstack_run_loop_set_timer_handler(&ble_idle_timer, &ble_idle_handler);
+    // btstack_run_loop_set_timer(&ble_idle_timer, BLE_IDLE_TIMEOUT);
+    // btstack_run_loop_add_timer(&ble_idle_timer);
 }
 
 /**
@@ -245,12 +262,16 @@ static void ble_hid_packet_handler(uint8_t packet_type, uint16_t channel, uint8_
                         ble_hid_change_state(BLE_HID_STATE_ONLINE);
 
                         mqtt_setup();
+
+                        lua_setup();
                     }
 
                     if ((btstack_event_state_get_state(packet) == HCI_STATE_HALTING) && (ble_hid_state != BLE_HID_STATE_OFFLINE)) {
                         ble_hid_change_state(BLE_HID_STATE_OFFLINE);
 
                         mqtt_teardown();
+
+                        lua_teardown();
                         
                         printf("[BLE HID] offline\n");
                     }
@@ -309,8 +330,6 @@ static void ble_hid_packet_handler(uint8_t packet_type, uint16_t channel, uint8_
                             btstack_ring_buffer_init(&buffer_hid_reports, storage_hid_reports, sizeof(storage_hid_reports));
                             pthread_mutex_unlock(&buffer_lock);
 
-                            // request min con interval 15 ms for iOS 11+
-                            //gap_request_connection_parameter_update(ble_con_handle, 12, 12, 0, 0x0048);
                             break;
                         }
                         case HCI_SUBEVENT_LE_CONNECTION_UPDATE_COMPLETE: {
@@ -428,6 +447,26 @@ static void ble_hid_buffer_poll_handler(btstack_timer_source_t * ts){
     btstack_run_loop_set_timer(ts, BLE_HID_BUFFER_POLL_INTERVAL);
     btstack_run_loop_add_timer(ts);
 }
+
+
+
+// static void ble_idle_handler(btstack_timer_source_t * ts){
+//     ble_hid_is_idle = !ble_hid_is_idle;
+
+//     if (ble_hid_is_idle) {
+//         printf("[BLE HID] idle, disconnect\n");
+//         gap_advertisements_enable(0);
+//         gap_disconnect(ble_con_handle);
+//         hci_power_control(HCI_POWER_OFF);
+//     } else {
+//         printf("[BLE HID] busy, connect\n");
+//         hci_power_control(HCI_POWER_ON);
+//         gap_advertisements_enable(1);
+//     }
+
+//     btstack_run_loop_set_timer(ts, BLE_IDLE_TIMEOUT);
+//     btstack_run_loop_add_timer(ts);
+// }
 
 /**
  * MQTT
@@ -571,6 +610,30 @@ static int mqtt_teardown(void) {
     return 0;
 }
 
+/**
+ * Lua
+ */
+
+static int lua_setup(void) {
+    printf("[Lua] initializing\n");
+
+    lua = luaL_newstate();
+    luaL_openlibs(lua);
+
+    luaL_dofile(lua, "mqtt-ble-hid.lua");
+
+    return 0;
+}
+
+static int lua_teardown(void) {
+    printf("[Lua] closing\n");
+
+    lua_close(lua);
+
+    return 0;
+}
+
+
 int btstack_main(int argc, char * argv[]) {
     int opt; 
       
@@ -600,7 +663,7 @@ int btstack_main(int argc, char * argv[]) {
 
     int rc = pthread_mutex_init(&buffer_lock, NULL);
     if (rc != 0) { 
-        printf("[MQTT] buffer mutex init has failed, rc: %d\n", rc); 
+        printf("[BLE HID] buffer mutex init has failed, rc: %d\n", rc); 
         return 1; 
     } 
 

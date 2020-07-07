@@ -1,4 +1,4 @@
-TOPTARGETS := all clean install
+TOPTARGETS := all clean install compile
 
 SUBDIRS := $(wildcard src/*/.)
 

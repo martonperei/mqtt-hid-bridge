@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <btstack.h>
+#include <MQTTAsync.h>
+#include <lua5.3/lua.h>
 
 /**
  * Setup method for the peripheral.
@@ -24,6 +26,8 @@ static void ble_hid_packet_handler(uint8_t packet_type, uint16_t channel, uint8_
 
 static void ble_hid_buffer_poll_handler(btstack_timer_source_t * ts);
 
+// static void ble_idle_handler(btstack_timer_source_t * ts);
+
 static int mqtt_setup(void);
 static int mqtt_teardown(void);
 
@@ -34,3 +38,8 @@ static void mqtt_on_connected(void *context, char *cause);
 
 static void mqtt_on_subscribe(void* context, MQTTAsync_successData* response);
 static void mqtt_on_subscribe_failed(void* context, MQTTAsync_failureData* response);
+
+
+static int lua_setup(void);
+
+static int lua_teardown(void);
