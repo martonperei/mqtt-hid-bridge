@@ -1,0 +1,16 @@
+{
+    // See http://go.microsoft.com/fwlink/?LinkId=827846
+    // for the documentation about the extensions.json format
+    "recommendations": [
+
+      // Prettier for auto formatting code
+      "esbenp.prettier-vscode",
+  
+      // GitLens for seeing version history inline
+      "eamodio.gitlens",
+
+      // Understated grayscale theme (light and dark variants)
+      "philipbe.theme-gray-matter"
+    ]
+  }
+  
