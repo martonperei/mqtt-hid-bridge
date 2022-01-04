@@ -1,6 +1,6 @@
 # HID-BLE bridge
 
-A modular application to translate USB events from a Logitech Unifying receiver through MQTT into Bluetooth commands.
+A modular proof of concept application to translate USB events from a Logitech Unifying receiver through MQTT into Bluetooth commands.
 Tested on a Raspberry Pi Zero W 2 and Apple TV.
 
 * usb-hid-mqtt Reads USB events from a Logitech Unifying receiver and forwards them to MQTT
