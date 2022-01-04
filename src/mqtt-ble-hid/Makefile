@@ -3,7 +3,6 @@ ifeq ($(PREFIX),)
 endif
 
 BTSTACK_ROOT ?= ../../lib/btstack
-MQTT_ROOT ?= ../../lib/mqtt
 
 BIN := mqtt-ble-hid
 
@@ -26,7 +25,8 @@ SRCS := \
 	btstack_run_loop_posix.c \
 	btstack_tlv_posix.c \
 	btstack_link_key_db_tlv.c \
-	btstack_uart_block_posix.c \
+	btstack_uart_posix.c \
+	btstack_signal.c \
 	btstack_slip.c \
 	hci_transport_h4.c \
 	hci_transport_h5.c \
@@ -43,6 +43,7 @@ SRCS := \
 	hci.c \
 	hci_cmd.c \
 	hci_dump.c \
+        hci_dump_posix_fs.c \
 	l2cap.c \
 	l2cap_signaling.c \
 	btstack_audio.c \
@@ -86,8 +87,6 @@ LDFLAGS :=
 LDLIBS := -lpaho-mqtt3as -lpthread -lrt -lm -ldl -llua5.3
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
 
-COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS)  -c -o $@
-LINK.o = $(LD) $(LDFLAGS) $(LDLIBS) -o $@ 
 PRECOMPILE =
 POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
@@ -108,20 +107,21 @@ install: all
 	# install -m 644 $(BIN).service /etc/systemd/system
 
 $(BIN): $(OBJS)
-	$(LINK.o) $^
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(OBJDIR)/%.o: %.c 
-$(OBJDIR)/%.o: %.c $(DEPDIR)/%.d | $(DEPDIR) $(OBJDIR) PREPROCESS_TLV_PATH $(SERVICES_GATT)
+$(OBJDIR)/%.o: %.c $(DEPDIR)/%.d | $(DEPDIR) $(OBJDIR) PREPROCESS_BTSTACK $(SERVICES_GATT)
 	$(PRECOMPILE)
-	$(COMPILE.c) $<
+	$(CC) $(DEPFLAGS) $(CFLAGS)  -c -o $@ $<
 	$(POSTCOMPILE)
 
 $(DEPDIR): ; @mkdir -p $@
 $(OBJDIR): ; @mkdir -p $@
 
-.PHONY: PREPROCESS_TLV_PATH
-PREPROCESS_TLV_PATH: 
+.PHONY: PREPROCESS_BTSTACK
+PREPROCESS_BTSTACK: 
 	sed -i 's/^#define TLV_DB_PATH_PREFIX .*/#define TLV_DB_PATH_PREFIX ".\/btstack_"/g' ${BTSTACK_ROOT}/port/raspi/main.c
+	sed -i 's/^\/\/ #define ENABLE_CONTROLLER_WARM_BOOT/#define ENABLE_CONTROLLER_WARM_BOOT/g' ${BTSTACK_ROOT}/port/raspi/btstack_config.h
 
 %.h: %.gatt
 	python3 ${BTSTACK_ROOT}/tool/compile_gatt.py -I. $< $@ 

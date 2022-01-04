@@ -2,8 +2,6 @@ ifeq ($(PREFIX),)
 	PREFIX := /usr/local
 endif
 
-MQTT_ROOT ?= ../../lib/mqtt
-
 BIN := usb-hid-mqtt
 
 DEPDIR := .deps
@@ -17,15 +15,12 @@ OBJS = $(SRCS:%.c=$(OBJDIR)/%.o)
 CC := gcc
 LD := gcc
 
-CFLAGS := -std=gnu99 -Wall -Werror \
-	-I${MQTT_ROOT}/src
+CFLAGS := -std=gnu99 -Wall -Werror
 
 LDFLAGS :=
-LDLIBS :=  -lusb-1.0 -lpthread -ludev -lpaho-mqtt3as
+LDLIBS := -lusb-1.0 -lpthread -ludev -lpaho-mqtt3as
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
 
-COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) -c -o $@
-LINK.o = $(LD) $(LDFLAGS) $(LDLIBS) -o $@
 PRECOMPILE =
 POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
@@ -46,12 +41,12 @@ install: all
 	# install -m 644 $(BIN).service /etc/systemd/system
 
 $(BIN): $(OBJS)
-	$(LINK.o) $^
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(OBJDIR)/%.o: %.c 
 $(OBJDIR)/%.o: %.c $(DEPDIR)/%.d | $(DEPDIR) $(OBJDIR)
 	$(PRECOMPILE)
-	$(COMPILE.c) $<
+	$(CC) $(DEPFLAGS) $(CFLAGS) -c -o $@ $<
 	$(POSTCOMPILE)
 
 $(DEPDIR): ; @mkdir -p $@
