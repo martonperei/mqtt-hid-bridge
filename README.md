@@ -1,6 +1,7 @@
 # HID-BLE bridge
 
 A modular proof of concept application to translate USB events from a Logitech Unifying receiver through MQTT into Bluetooth commands.
+I wrote this so I could continue using my Logitech Harmony Companion Remote without the Harmony Hub.
 Tested on a Raspberry Pi Zero W 2 and Apple TV.
 
 * usb-hid-mqtt Reads USB events from a Logitech Unifying receiver and forwards them to MQTT
