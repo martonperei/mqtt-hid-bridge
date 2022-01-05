@@ -6,6 +6,10 @@ Tested on a Raspberry Pi Zero W 2 and Apple TV.
 * usb-hid-mqtt Reads USB events from a Logitech Unifying receiver and forwards them to MQTT
 * mqtt-ble-hid Reads bluetooth commands from MQTT and forwards them to the paired bluetooth device
 
+* You can use Node-Red to glue them together:
+
+![image](https://user-images.githubusercontent.com/5266196/148202704-e7b82faa-992b-4278-a1b8-732a190a7fa6.png)
+
 ## Requirements
 
 * sudo apt install libpaho-mqtt-dev liblua5.3-dev libusb-1.0-0-dev libudev-dev
