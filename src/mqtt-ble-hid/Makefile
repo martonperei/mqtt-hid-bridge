@@ -103,8 +103,8 @@ clean:
 install: all
 	install -d $(DESTDIR)$(PREFIX)/bin/
 	install -m 755 $(BIN) $(DESTDIR)$(PREFIX)/bin/
-	# install -d $(DESTDIR)$(PREFIX)/lib/hid-ble-bridge
-	# install -m 644 $(BIN).service /etc/systemd/system
+	install -d $(DESTDIR)$(PREFIX)/lib/mqtt-hid-bridge
+	install -m 644 $(BIN).service /etc/systemd/system
 
 $(BIN): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
